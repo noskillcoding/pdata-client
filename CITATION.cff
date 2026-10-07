@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use pdata.world data, please cite it as below."
+type: dataset
+title: "pdata.world: prediction-market prices, volumes and results from eight venues"
+authors:
+  - name: "pdata.world"
+    website: "https://pdata.world"
+abstract: >-
+  Prices, 24-hour volume and results for prediction markets on Polymarket,
+  Kalshi, Manifold, Myriad, Limitless, Predict, Opinion and Gemini, collected
+  every 10 to 60 minutes and served through a read-only API, an MCP server,
+  nightly bulk files and a public read-only Postgres database.
+url: "https://pdata.world/data"
+repository-code: "https://github.com/noskillcoding/pdata-client"
+license: CC-BY-4.0
+date-released: "2026-10-07"
+keywords:
+  - prediction markets
+  - Polymarket
+  - Kalshi
+  - Manifold
+  - forecasting
+  - open data

@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "pdata": { "url": "https://api.pdata.world/mcp" }
+  }
+}

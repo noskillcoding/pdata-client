@@ -1,0 +1,21 @@
+name: test
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"  # weekly live smoke test against api.pdata.world
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install .
+      - run: python -m unittest discover -s tests -v
+        env:
+          PDATA_LIVE: ${{ github.event_name == 'schedule' && '1' || '' }}

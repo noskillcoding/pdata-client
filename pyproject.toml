@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdata-client"
+version = "0.1.0"
+description = "Python client for pdata.world, a free read-only API for prediction-market data from Polymarket, Kalshi, Manifold and five more venues."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "pdata.world" }]
+keywords = ["prediction markets", "polymarket", "kalshi", "manifold", "api client", "open data"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://pdata.world"
+Documentation = "https://api.pdata.world/docs"
+Data = "https://pdata.world/data"
+Research = "https://pdata.world/research"
+
+[tool.setuptools.packages.find]
+where = ["src"]
