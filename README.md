@@ -106,7 +106,8 @@ pdata.world publishes dated reports built from this data, each with its method a
   For 39,681 Polymarket and Kalshi markets that settled between 28 September and
   5 October 2026, grouped into 10-point bands by their price 24 hours before close, the
   share that resolved YES was on average 0.96 percentage points from the band's average
-  price (Brier score 0.110, against 0.199 for always guessing the base rate).
+  price (Brier score 0.110, against 0.199 for always guessing the base rate). Also published
+  as a citable note: [doi.org/10.5281/zenodo.23212130](https://doi.org/10.5281/zenodo.23212130).
 - [How eight prediction-market venues count volume](https://pdata.world/research/prediction-market-volume)
 - [What each prediction-market API gives you](https://pdata.world/research/prediction-market-apis)
 - [Same question, different price: prediction markets across venues](https://pdata.world/research/cross-venue-prices)
