@@ -10,6 +10,7 @@ abstract: >-
   Kalshi, Manifold, Myriad, Limitless, Predict, Opinion and Gemini, collected
   every 10 to 60 minutes and served through a read-only API, an MCP server,
   nightly bulk files and a public read-only Postgres database.
+doi: "10.5281/zenodo.23211611"
 url: "https://pdata.world/data"
 repository-code: "https://github.com/noskillcoding/pdata-client"
 license: CC-BY-4.0

@@ -116,7 +116,8 @@ pdata.world publishes dated reports built from this data, each with its method a
 
 The data is CC BY 4.0. A credit such as "Data: pdata.world" with a link is enough. Every
 single-event API answer also carries `_meta.cite_as`, a ready-made citation sentence. For
-papers, GitHub's "Cite this repository" button uses [`CITATION.cff`](CITATION.cff).
+papers, cite the dated snapshot on Zenodo, DOI [10.5281/zenodo.23211611](https://doi.org/10.5281/zenodo.23211611); GitHub's
+"Cite this repository" button uses [`CITATION.cff`](CITATION.cff).
 
 ## Licence
 
