@@ -63,6 +63,9 @@ Runnable examples are in [`examples/`](examples/):
   (`markets-open`), every open event (`events-open`) and the archive of settled events with
   their results (`resolved`), as gzipped JSON lines. Line 1 of each file is a manifest
   giving the licence and every field's meaning and unit.
+- **Monthly snapshot on Hugging Face:** the same three files as Parquet, each snapshot
+  tagged with its date:
+  [`lowskillcoding/pdata-prediction-markets`](https://huggingface.co/datasets/lowskillcoding/pdata-prediction-markets).
 - **Read-only Postgres** with full SQL:
   `postgresql://pdata_readonly:pdata_public_2026@pg.pdata.world:6433/pdata_new`. The
   password is published on purpose and is never rotated. Queries are capped at 5 seconds.
