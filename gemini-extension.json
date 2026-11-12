@@ -1,0 +1,11 @@
+{
+  "name": "pdata",
+  "version": "0.1.0",
+  "description": "Prediction-market odds, 24-hour moves and volume from Polymarket, Kalshi, Manifold and 5 more venues, through pdata.world's hosted, read-only MCP server. No key, no account.",
+  "mcpServers": {
+    "pdata": {
+      "url": "https://api.pdata.world/mcp",
+      "type": "http"
+    }
+  }
+}
