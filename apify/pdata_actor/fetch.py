@@ -188,7 +188,8 @@ def to_row(
         "title": event.get("title"),
         "venue": source,
         "eventId": event_id,
-        "topOutcome": event.get("top_outcome"),
+        # The API sends "" for some leading outcomes that have no label.
+        "topOutcome": event.get("top_outcome") or None,
         "topOutcomeProbability": event.get("top_outcome_probability"),
         "topOutcomeChange24h": event.get("top_outcome_prob_24h_change"),
         "volume24h": event.get("volume_24hr"),

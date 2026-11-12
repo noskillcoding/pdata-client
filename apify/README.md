@@ -80,6 +80,9 @@ each outcome is left out:
 - **Volume** is in each venue's own unit and is never converted: shares on Polymarket,
   contracts on Kalshi, play-money mana on Manifold, and each other venue's figure as it
   reports it. `volumeUnit` says which. Do not add volumes across venues.
+- **Order:** events come most traded first by the 24-hour volume each venue reports. With
+  no venue chosen, that order mixes units across venues; choose a venue for a like-for-like
+  ranking.
 - **Freshness:** `asOf` is when pdata.world served the numbers. pdata.world polls each
   venue every 10 to 60 minutes.
 

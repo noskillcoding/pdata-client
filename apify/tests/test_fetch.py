@@ -164,7 +164,7 @@ class FetchTests(unittest.TestCase):
 
     def test_zero_outcomes_makes_a_single_request(self):
         opener = FakeOpener(
-            {"/api/v1/events": {"_meta": META, "items": [event("myriad", "9")]}}
+            {"/api/v1/events": {"_meta": META, "items": [event("myriad", "9", top_outcome="")]}}
         )
         rows = fetch_events(
             PdataApi(opener=opener), venue="myriad", outcomes_per_event=0, include_closed=True
@@ -174,6 +174,7 @@ class FetchTests(unittest.TestCase):
         self.assertEqual(listing["source"], "myriad")
         self.assertNotIn("closed", listing)
         self.assertEqual(rows[0]["outcomes"], [])
+        self.assertIsNone(rows[0]["topOutcome"])
         self.assertIsNone(rows[0]["citeAs"])
         self.assertEqual(rows[0]["asOf"], META["as_of"])
         self.assertEqual(rows[0]["pdataUrl"], "https://pdata.world/events/myriad/9")
