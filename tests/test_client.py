@@ -13,6 +13,7 @@ import unittest
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 
+import pdata
 from pdata import Client, PdataError
 
 
@@ -31,10 +32,12 @@ class FakeOpener:
     def __init__(self, routes):
         self.routes = routes
         self.urls = []
+        self.requests = []
 
     def __call__(self, request, timeout=None):
         url = request.full_url
         self.urls.append(url)
+        self.requests.append(request)
         answer = self.routes[urlsplit(url).path]
         if callable(answer):
             answer = answer(url)
@@ -64,6 +67,16 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(q["closed"], "false")
         self.assertEqual(q["sort"], "-volume_24hr")
         self.assertNotIn("search", q)
+
+    def test_default_user_agent_names_client_version_and_agents_page(self):
+        opener = FakeOpener({"/api/v1/summary": {}})
+        Client(opener=opener).summary()
+        Client(opener=opener, user_agent="my-project/2.0").summary()
+        sent = [r.get_header("User-agent") for r in opener.requests]
+        self.assertEqual(
+            sent[0], f"pdata-client/{pdata.__version__} (+https://pdata.world/agents)"
+        )
+        self.assertEqual(sent[1], "my-project/2.0")
 
     def test_iter_markets_walks_pages_and_stops_at_max_items(self):
         def answer(url):

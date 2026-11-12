@@ -1,29 +1,50 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pdata-client"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Python client for pdata.world, a free read-only API for prediction-market data from Polymarket, Kalshi, Manifold and five more venues."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
-authors = [{ name = "pdata.world" }]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "pdata.world", email = "support@pdata.world" }]
 keywords = ["prediction markets", "polymarket", "kalshi", "manifold", "api client", "open data"]
 classifiers = [
-  "License :: OSI Approved :: MIT License",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering :: Information Analysis",
+  "Typing :: Typed",
 ]
 dependencies = []
 
 [project.urls]
 Homepage = "https://pdata.world"
 Documentation = "https://api.pdata.world/docs"
+"OpenAPI" = "https://api.pdata.world/openapi.json"
+Repository = "https://github.com/noskillcoding/pdata-client"
+Issues = "https://github.com/noskillcoding/pdata-client/issues"
 Data = "https://pdata.world/data"
 Research = "https://pdata.world/research"
 
+[tool.setuptools.dynamic]
+version = { attr = "pdata._version.__version__" }
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+pdata = ["py.typed"]

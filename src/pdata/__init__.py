@@ -15,7 +15,15 @@ Standard library only (urllib + json + gzip), Python 3.9+.
 
 from __future__ import annotations
 
-from .client import API_BASE, BULK_BASE, VENUES, Client, PdataError
+from ._version import __version__
+from .client import API_BASE, BULK_BASE, USER_AGENT, VENUES, Client, PdataError
 
-__all__ = ["API_BASE", "BULK_BASE", "VENUES", "Client", "PdataError", "__version__"]
-__version__ = "0.1.0"
+__all__ = [
+    "API_BASE",
+    "BULK_BASE",
+    "USER_AGENT",
+    "VENUES",
+    "Client",
+    "PdataError",
+    "__version__",
+]

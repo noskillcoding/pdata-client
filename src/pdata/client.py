@@ -23,8 +23,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
+from ._version import __version__
+
 API_BASE = "https://api.pdata.world/api/v1"
 BULK_BASE = "https://api.pdata.world/bulk"
+# Sent unless the caller passes its own; names the client and where to read
+# about pdata.world's agent and API access.
+USER_AGENT = f"pdata-client/{__version__} (+https://pdata.world/agents)"
 VENUES = (
     "polymarket",
     "kalshi",
@@ -87,7 +92,8 @@ class Client:
         bulk_url: bulk-file root, default ``https://api.pdata.world/bulk``.
         timeout: seconds per request.
         retries: extra attempts on 429/5xx and network errors, with backoff.
-        user_agent: sent on every request; identify your project if you can.
+        user_agent: sent on every request instead of ``USER_AGENT``; if you
+            set one, name your project in it.
         opener: a ``urlopen``-compatible callable, for tests or a custom
             transport.
     """
@@ -106,9 +112,7 @@ class Client:
         self.bulk_url = bulk_url.rstrip("/")
         self.timeout = timeout
         self.retries = retries
-        self.user_agent = user_agent or (
-            "pdata-client/0.1 (+https://github.com/noskillcoding/pdata-client)"
-        )
+        self.user_agent = user_agent or USER_AGENT
         self._opener = opener or urlopen
 
     # ── transport ────────────────────────────────────────────────────────
