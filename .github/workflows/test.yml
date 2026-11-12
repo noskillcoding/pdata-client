@@ -4,15 +4,23 @@ on:
   pull_request:
   schedule:
     - cron: "17 6 * * 1"  # weekly live smoke test against api.pdata.world
+permissions:
+  contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # ubuntu-latest became 26.04, which has no Python 3.9 build (the weekly run
+    # of 2026-11-09 failed on it), so the oldest supported Python runs on 24.04.
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python: ["3.9", "3.13"]
+        include:
+          - python: "3.9"
+            os: ubuntu-24.04
+          - python: "3.14"
+            os: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - run: pip install .
