@@ -1,0 +1,52 @@
+{
+  "$schema": "https://apify.com/schemas/v1/input.ide.json",
+  "title": "Prediction market events",
+  "description": "Search by phrase, by venue, or both. With neither, the actor returns the most traded open events across all eight venues.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "search": {
+      "title": "Search phrase",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Words to look for in event titles and descriptions, such as \"fed decision\" or \"world cup\". Leave empty to list the most traded events.",
+      "maxLength": 200,
+      "example": "fed decision"
+    },
+    "venue": {
+      "title": "Venue",
+      "type": "string",
+      "editor": "select",
+      "description": "Only events from this venue. Leave empty for all eight.",
+      "enum": ["polymarket", "kalshi", "manifold", "myriad", "limitless", "predict", "opinion", "gemini"],
+      "enumTitles": ["Polymarket", "Kalshi", "Manifold", "Myriad", "Limitless", "Predict", "Opinion", "Gemini"]
+    },
+    "maxEvents": {
+      "title": "Maximum events",
+      "type": "integer",
+      "editor": "number",
+      "description": "How many events to return, most traded in the last 24 hours first.",
+      "default": 20,
+      "prefill": 10,
+      "minimum": 1,
+      "maximum": 200
+    },
+    "outcomesPerEvent": {
+      "title": "Outcomes per event",
+      "type": "integer",
+      "editor": "number",
+      "description": "How many of each event's outcomes to include with their prices: outcomes traded in the last 24 hours first, then by probability. 0 keeps only the leading outcome and makes one request in total instead of one per event.",
+      "default": 5,
+      "minimum": 0,
+      "maximum": 50
+    },
+    "includeClosed": {
+      "title": "Include closed events",
+      "type": "boolean",
+      "editor": "checkbox",
+      "description": "Also return events that stopped trading in the last 10 days.",
+      "default": false
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://apify.com/schemas/v1/dataset.ide.json",
+  "actorSpecification": 1,
+  "title": "Prediction market events",
+  "description": "One item per event, from pdata.world's API. Probabilities are each venue's own market price, between 0 and 1. Data: pdata.world, CC BY 4.0.",
+  "fields": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string", "title": "Event", "description": "Event title as the venue publishes it.", "example": "Fed Decision in December?" },
+      "venue": { "type": "string", "title": "Venue", "description": "polymarket, kalshi, manifold, myriad, limitless, predict, opinion or gemini.", "example": "polymarket" },
+      "eventId": { "type": "string", "title": "Event id", "description": "The venue's event id, unique within the venue.", "example": "770450" },
+      "topOutcome": { "type": ["string", "null"], "title": "Leading outcome", "description": "The outcome with the highest probability.", "example": "25 bps increase" },
+      "topOutcomeProbability": { "type": ["number", "null"], "title": "Leading probability", "description": "Probability of the leading outcome, 0 to 1.", "example": 0.865 },
+      "topOutcomeChange24h": { "type": ["number", "null"], "title": "24h change", "description": "Change in the leading outcome's probability over 24 hours, in probability units (0.03 = 3 points).", "example": 0.01 },
+      "volume24h": { "type": ["number", "null"], "title": "24h volume", "description": "Trading volume over 24 hours in the venue's own unit (see volumeUnit); not comparable across venues.", "example": 1416187.66 },
+      "volumeUnit": { "type": "string", "title": "Volume unit", "description": "shares (Polymarket), contracts (Kalshi), mana (play money, Manifold), or as reported by the venue.", "example": "shares" },
+      "endDate": { "type": ["string", "null"], "title": "Ends", "description": "Scheduled close, ISO 8601 UTC.", "example": "2026-12-10T04:59:00Z" },
+      "closed": { "type": ["boolean", "null"], "title": "Closed", "description": "True once the event has stopped trading." },
+      "categories": { "type": "array", "items": { "type": "string" }, "title": "Categories", "description": "pdata.world topic categories.", "example": ["Politics", "Economy"] },
+      "outcomes": {
+        "type": "array",
+        "title": "Outcomes",
+        "description": "The event's first outcomes (markets) with their prices: traded in the last 24 hours first, then by probability. Empty when outcomesPerEvent is 0.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "outcomeName": { "type": ["string", "null"], "description": "Outcome label, or the market's question when it has none." },
+            "outcomeProbability": { "type": ["number", "null"], "description": "Probability of the market's first outcome (usually YES), 0 to 1." },
+            "outcomeChange24h": { "type": ["number", "null"], "description": "Change over 24 hours, in probability units." },
+            "outcomeVolume24h": { "type": ["number", "null"], "description": "Market volume over 24 hours, in the venue's own unit." },
+            "outcomeClosed": { "type": ["boolean", "null"] },
+            "question": { "type": ["string", "null"], "description": "The market's question." },
+            "marketId": { "type": ["string", "null"], "description": "The venue's market id." }
+          }
+        }
+      },
+      "outcomesTotal": { "type": ["integer", "null"], "title": "Outcomes in event", "description": "How many outcomes the event has in all." },
+      "pdataUrl": { "type": "string", "title": "pdata.world page", "description": "The event's page on pdata.world.", "example": "https://pdata.world/events/polymarket/770450" },
+      "venueUrl": { "type": ["string", "null"], "title": "Venue page", "description": "The event's page on the venue." },
+      "citeAs": { "type": ["string", "null"], "title": "Citation", "description": "A ready-made sentence to quote the leading outcome with its source and date." },
+      "asOf": { "type": ["string", "null"], "title": "As of", "description": "When pdata.world served these numbers, ISO 8601 UTC." },
+      "attribution": { "type": ["string", "null"], "title": "Attribution", "description": "Credit line required by the CC BY 4.0 licence." }
+    }
+  },
+  "views": {
+    "overview": {
+      "title": "Events",
+      "transformation": {
+        "fields": ["title", "venue", "topOutcome", "topOutcomeProbability", "topOutcomeChange24h", "volume24h", "volumeUnit", "endDate", "pdataUrl"]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "title": { "label": "Event", "format": "text" },
+          "venue": { "label": "Venue", "format": "text" },
+          "topOutcome": { "label": "Leading outcome", "format": "text" },
+          "topOutcomeProbability": { "label": "Probability", "format": "number" },
+          "topOutcomeChange24h": { "label": "24h change", "format": "number" },
+          "volume24h": { "label": "24h volume", "format": "number" },
+          "volumeUnit": { "label": "Unit", "format": "text" },
+          "endDate": { "label": "Ends", "format": "date" },
+          "pdataUrl": { "label": "pdata.world page", "format": "link" }
+        }
+      }
+    },
+    "outcomes": {
+      "title": "Outcomes",
+      "transformation": {
+        "unwind": ["outcomes"],
+        "fields": ["title", "venue", "outcomeName", "outcomeProbability", "outcomeChange24h", "outcomeVolume24h", "volumeUnit", "pdataUrl"]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "title": { "label": "Event", "format": "text" },
+          "venue": { "label": "Venue", "format": "text" },
+          "outcomeName": { "label": "Outcome", "format": "text" },
+          "outcomeProbability": { "label": "Probability", "format": "number" },
+          "outcomeChange24h": { "label": "24h change", "format": "number" },
+          "outcomeVolume24h": { "label": "24h volume", "format": "number" },
+          "volumeUnit": { "label": "Unit", "format": "text" },
+          "pdataUrl": { "label": "pdata.world page", "format": "link" }
+        }
+      }
+    }
+  }
+}

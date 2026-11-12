@@ -1,0 +1,2 @@
+# The actor's own code (pdata_actor/fetch.py) uses only the standard library.
+apify >= 4.0.0, < 5.0.0
