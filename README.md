@@ -1,13 +1,12 @@
 # pdata-client
 
-A small Python client, examples and sample data for **[pdata.world](https://pdata.world)**, a
-free, read-only API for prediction-market data from eight venues: Polymarket, Kalshi,
+Python client, AI-assistant plugin files and sample data for **[pdata.world](https://pdata.world)**,
+a free, read-only API for prediction-market data from eight venues: Polymarket, Kalshi,
 Manifold, Myriad, Limitless, Predict, Opinion and Gemini.
 
-pdata.world polls each venue every 10 to 60 minutes and keeps prices, 24-hour volume and
-results in one schema, so one request can compare venues that otherwise each need their own
-integration. There is no API key and no signup. The data is published under
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): use it, and credit pdata.world.
+```bash
+pip install pdata-client
+```
 
 ```python
 from pdata import Client
@@ -18,14 +17,61 @@ for m in page["items"]:
     print(m["source"], f"{m['probability']:.0%}", m["event_title"], "—", m["question"])
 ```
 
+**Cite as:** Data aggregated by pdata.world (https://pdata.world) from 8 prediction-market
+venues; CC BY 4.0; source data © each venue. Dataset DOI
+[10.5281/zenodo.23211610](https://doi.org/10.5281/zenodo.23211610).
+
+pdata.world polls each venue every 10 to 60 minutes and keeps prices, 24-hour volume and
+results in one schema, so one request can compare venues that otherwise each need their own
+integration. There is no API key and no signup. The data is published under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): use it, and credit pdata.world.
+
 ## Install
 
 ```bash
+pip install pdata-client
+# or the latest commit:
 pip install git+https://github.com/noskillcoding/pdata-client
 ```
 
-The client uses only the standard library (`urllib`, `json`, `gzip`) and runs on Python 3.9
-or later. You can also copy [`src/pdata/client.py`](src/pdata/client.py) into a project.
+The client uses only the standard library (`urllib`, `json`, `gzip`), has no dependencies
+and runs on Python 3.9 or later. You can also copy
+[`src/pdata/client.py`](https://github.com/noskillcoding/pdata-client/blob/main/src/pdata/client.py) and
+[`src/pdata/_version.py`](https://github.com/noskillcoding/pdata-client/blob/main/src/pdata/_version.py) into a project. It identifies itself as
+`pdata-client/<version> (+https://pdata.world/agents)`; pass `user_agent=` to name your own
+project instead.
+
+## The MCP server and the assistant plugins
+
+pdata.world hosts an MCP server at `https://api.pdata.world/mcp` (Streamable HTTP, no key,
+no account). It is **read-only**: its 14 tools read the same public data as the API. The
+server is run by pdata.world and its code is **closed-source**; it is not in this
+repository. This repository holds the Python client, the plugin files that connect coding
+assistants to the hosted server, and notes on the datasets. The server is listed in the
+official MCP registry as `world.pdata/mcp`.
+
+- **Claude Code:** `/plugin install pdata --marketplace noskillcoding/pdata-client` inside a
+  session (Claude Code 2.1.275 or later), or from the shell
+  `claude plugin marketplace add noskillcoding/pdata-client` followed by
+  `claude plugin install pdata@pdata-world`. The plugin adds the MCP server and a skill,
+  [`skills/pdata-prediction-markets/SKILL.md`](https://github.com/noskillcoding/pdata-client/blob/main/skills/pdata-prediction-markets/SKILL.md),
+  that tells the assistant when to use pdata and how to cite it.
+- **Gemini CLI:** `gemini extensions install https://github.com/noskillcoding/pdata-client`
+  adds the same server and skill.
+- **Any other MCP client:** add the server by URL, for example
+  `claude mcp add --transport http pdata https://api.pdata.world/mcp`, or the config in
+  [`examples/mcp.json`](https://github.com/noskillcoding/pdata-client/blob/main/examples/mcp.json).
+
+## What is in this repository
+
+| Path | What it is |
+|---|---|
+| [`src/pdata/`](https://github.com/noskillcoding/pdata-client/blob/main/src/pdata/) | The Python client, published on PyPI as `pdata-client` |
+| [`.claude-plugin/`](https://github.com/noskillcoding/pdata-client/blob/main/.claude-plugin/), [`.mcp.json`](https://github.com/noskillcoding/pdata-client/blob/main/.mcp.json), [`skills/`](https://github.com/noskillcoding/pdata-client/blob/main/skills/) | Claude Code plugin and its one-plugin marketplace |
+| [`gemini-extension.json`](https://github.com/noskillcoding/pdata-client/blob/main/gemini-extension.json) | Gemini CLI extension (uses the same `skills/`) |
+| [`apify/`](https://github.com/noskillcoding/pdata-client/blob/main/apify/) | Source of an Apify actor that returns events with current prices |
+| [`data/`](https://github.com/noskillcoding/pdata-client/blob/main/data/) | Samples of the nightly bulk files, CC BY 4.0 |
+| [`examples/`](https://github.com/noskillcoding/pdata-client/blob/main/examples/) | Runnable scripts and an MCP client config |
 
 ## What the client covers
 
@@ -48,17 +94,14 @@ Every method returns the API's JSON unchanged, so the
 rejected with a message listing every allowed one. Errors raise `PdataError` with the API's
 `code` and `message`.
 
-Runnable examples are in [`examples/`](examples/):
-[`quickstart.py`](examples/quickstart.py) makes five common calls, and
-[`resolved_archive.py`](examples/resolved_archive.py) streams the archive of settled events.
+Runnable examples are in [`examples/`](https://github.com/noskillcoding/pdata-client/blob/main/examples/):
+[`quickstart.py`](https://github.com/noskillcoding/pdata-client/blob/main/examples/quickstart.py) makes five common calls, and
+[`resolved_archive.py`](https://github.com/noskillcoding/pdata-client/blob/main/examples/resolved_archive.py) streams the archive of settled events.
 
 ## Other ways to get the same data
 
-- **MCP server for AI assistants:** `https://api.pdata.world/mcp`, remote over Streamable
-  HTTP, no key. Add `{"mcpServers": {"pdata": {"url": "https://api.pdata.world/mcp"}}}`
-  to the client config ([`examples/mcp.json`](examples/mcp.json)), or run
-  `claude mcp add --transport http pdata https://api.pdata.world/mcp`. It is listed in the
-  official MCP registry as `world.pdata/mcp`.
+- **MCP server for AI assistants:** `https://api.pdata.world/mcp`; see
+  [above](#the-mcp-server-and-the-assistant-plugins).
 - **Nightly bulk files** at <https://api.pdata.world/bulk/>: every open market
   (`markets-open`), every open event (`events-open`) and the archive of settled events with
   their results (`resolved`), as gzipped JSON lines. Line 1 of each file is a manifest
@@ -69,13 +112,13 @@ Runnable examples are in [`examples/`](examples/):
 - **Read-only Postgres** with full SQL:
   `postgresql://pdata_readonly:pdata_public_2026@pg.pdata.world:6433/pdata_new`. The
   password is published on purpose and is never rotated. Queries are capped at 5 seconds.
-  See [`examples/postgres.sql`](examples/postgres.sql).
+  See [`examples/postgres.sql`](https://github.com/noskillcoding/pdata-client/blob/main/examples/postgres.sql).
 - **The website:** every event has a page at `https://pdata.world/events/{source}/{id}`,
   and <https://pdata.world/data> describes all of the above.
 
 ## Sample data
 
-[`data/`](data/) holds random samples of the three bulk files as of 7 October 2026: 1,000
+[`data/`](https://github.com/noskillcoding/pdata-client/blob/main/data/) holds random samples of the three bulk files as of 7 October 2026: 1,000
 open markets, 500 open events and 1,000 settled events, with an equal share per venue where
 the venue had enough rows. Each file starts with the manifest line. They are for looking at
 the shape of the data; the full files are rebuilt every night.
@@ -117,13 +160,27 @@ pdata.world publishes dated reports built from this data, each with its method a
 
 The data is CC BY 4.0. A credit such as "Data: pdata.world" with a link is enough. Every
 single-event API answer also carries `_meta.cite_as`, a ready-made citation sentence. For
-papers, cite the dated snapshot on Zenodo, DOI [10.5281/zenodo.23211611](https://doi.org/10.5281/zenodo.23211611); GitHub's
-"Cite this repository" button uses [`CITATION.cff`](CITATION.cff).
+papers, cite the dataset on Zenodo: DOI
+[10.5281/zenodo.23211610](https://doi.org/10.5281/zenodo.23211610) always resolves to the
+latest snapshot, and each snapshot has its own DOI, such as
+[10.5281/zenodo.23211611](https://doi.org/10.5281/zenodo.23211611) for 7 October 2026. The
+calibration note is [10.5281/zenodo.23212130](https://doi.org/10.5281/zenodo.23212130).
+GitHub's "Cite this repository" button uses [`CITATION.cff`](https://github.com/noskillcoding/pdata-client/blob/main/CITATION.cff).
 
 ## Licence
 
-The code in this repository is under the [MIT licence](LICENSE). The data, including the
-files in `data/`, is under [CC BY 4.0](data/LICENSE.md); the underlying market data remains
-subject to each venue's own terms.
+The code in this repository, including the plugin files and the Apify actor, is under the
+[MIT licence](https://github.com/noskillcoding/pdata-client/blob/main/LICENSE). The data, including the files in `data/`, is under
+[CC BY 4.0](https://github.com/noskillcoding/pdata-client/blob/main/data/LICENSE.md); the underlying market data remains subject to each venue's
+own terms.
 
 pdata.world is independent and not affiliated with any of the venues it tracks.
+
+## Releasing
+
+One version covers the PyPI package, the Claude Code plugin and the Gemini extension. Bump
+it in [`src/pdata/_version.py`](https://github.com/noskillcoding/pdata-client/blob/main/src/pdata/_version.py),
+[`.claude-plugin/plugin.json`](https://github.com/noskillcoding/pdata-client/blob/main/.claude-plugin/plugin.json) and
+[`gemini-extension.json`](https://github.com/noskillcoding/pdata-client/blob/main/gemini-extension.json) together (a test fails otherwise), then
+push a tag `v<version>`: [`publish.yml`](https://github.com/noskillcoding/pdata-client/blob/main/.github/workflows/publish.yml) builds, tests and
+uploads to PyPI through trusted publishing. Contact: support@pdata.world.
