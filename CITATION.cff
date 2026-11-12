@@ -11,6 +11,13 @@ abstract: >-
   every 10 to 60 minutes and served through a read-only API, an MCP server,
   nightly bulk files and a public read-only Postgres database.
 doi: "10.5281/zenodo.23211611"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23211611"
+    description: "Zenodo snapshot of 2026-10-07"
+  - type: doi
+    value: "10.5281/zenodo.23211610"
+    description: "Zenodo concept DOI: always resolves to the latest snapshot"
 url: "https://pdata.world/data"
 repository-code: "https://github.com/noskillcoding/pdata-client"
 license: CC-BY-4.0
@@ -22,3 +29,13 @@ keywords:
   - Manifold
   - forecasting
   - open data
+references:
+  - type: report
+    title: "How close were prediction-market prices to outcomes? Calibration of Polymarket and Kalshi one day and one week before close"
+    authors:
+      - name: "pdata.world"
+        website: "https://pdata.world"
+    doi: "10.5281/zenodo.23212130"
+    date-released: "2026-10-07"
+    license: CC-BY-4.0
+    url: "https://pdata.world/research/prediction-market-accuracy"
