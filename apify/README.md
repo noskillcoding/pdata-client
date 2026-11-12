@@ -101,9 +101,10 @@ request to pdata.world, plus one per event when outcomes are requested.
 
 ## Data source and licence
 
-- **Data:** collected by [pdata.world](https://pdata.world) from the eight venues' public
-  data, published under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Credit
-  "pdata.world" when you reuse it; every item carries the `attribution` line and a
+- **Data:** collected by pdata.world from the eight venues' public data
+  ([API documentation](https://api.pdata.world/docs)), published under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Credit "pdata.world" when you
+  reuse it; every item carries the `attribution` line and a
   `citeAs` sentence. The underlying market data remains subject to each venue's own terms.
 - **Actor code:** MIT licence.
 - pdata.world is independent and not affiliated with any of the venues it tracks, and
