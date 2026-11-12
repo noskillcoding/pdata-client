@@ -1,0 +1,18 @@
+{
+  "name": "pdata-world",
+  "description": "pdata.world's plugin: prediction-market data from eight venues through a read-only MCP server.",
+  "owner": {
+    "name": "pdata.world",
+    "email": "support@pdata.world",
+    "url": "https://pdata.world"
+  },
+  "plugins": [
+    {
+      "name": "pdata",
+      "source": "./",
+      "description": "Prediction-market odds, 24-hour moves and volume across eight venues, from pdata.world's read-only MCP server.",
+      "category": "data",
+      "tags": ["prediction-markets", "polymarket", "kalshi", "odds", "mcp"]
+    }
+  ]
+}

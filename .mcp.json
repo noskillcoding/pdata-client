@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pdata": {
+      "type": "http",
+      "url": "https://api.pdata.world/mcp"
+    }
+  }
+}
