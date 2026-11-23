@@ -30,15 +30,11 @@ VENUES = (
     "predict",
     "opinion",
     "gemini",
+    "hyperliquid",
+    "mnx",
+    "seer",
+    "xo",
 )
-# Units as the API documents them for volume_24hr: venue-reported, never
-# converted between venues.
-VOLUME_UNITS = {
-    "polymarket": "shares",
-    "kalshi": "contracts",
-    "manifold": "mana (play money)",
-}
-OTHER_VOLUME_UNIT = "as reported by the venue"
 MAX_EVENTS = 200  # the API's page_size cap
 MAX_OUTCOMES = 50
 MAX_SEARCH_LENGTH = 200
@@ -193,7 +189,7 @@ def to_row(
         "topOutcomeProbability": event.get("top_outcome_probability"),
         "topOutcomeChange24h": event.get("top_outcome_prob_24h_change"),
         "volume24h": event.get("volume_24hr"),
-        "volumeUnit": VOLUME_UNITS.get(source, OTHER_VOLUME_UNIT),
+        "volumeUnit": "mana (play money)" if source == "manifold" else "USD",
         "endDate": event.get("end_date"),
         "closed": event.get("closed"),
         "categories": event.get("categories") or [],

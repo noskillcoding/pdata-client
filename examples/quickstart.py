@@ -5,10 +5,13 @@ from pdata import Client
 pd = Client()
 
 # 1. The most traded open markets on Kalshi and Polymarket over the last 24h.
-#    Volume is in each venue's own unit (Polymarket shares, Kalshi contracts).
+#    Volume is in US dollars on every venue except Manifold (play-money mana).
 top = pd.markets(source=["kalshi", "polymarket"], closed=False, sort="-volume_24hr", page_size=5)
 for m in top["items"]:
-    print(f"{m['source']:<10} {m['probability']:>5.0%}  {m['event_title']} — {m['question']}")
+    price = m.get("probability")
+    formatted_price = f"{price:.0%}" if price is not None else "unavailable"
+    tier = m.get("quote_tier") or "unknown"
+    print(f"{m['source']:<10} {formatted_price} ({tier})  {m['event_title']} — {m['question']}")
 
 # 2. One event with its markets, and the citation pdata suggests for it.
 first = top["items"][0]
@@ -23,8 +26,8 @@ for series in history["series"]:
         print(f"\n{series['name']}: {len(points)} points, "
               f"{points[0]['probability']} -> {points[-1]['probability']}")
 
-# 4. The biggest 24h moves across all eight venues, leaving out markets that
-#    are settling (now under 5% or over 95%) and ones that barely trade.
+# 4. The biggest 24h moves across venues for open markets priced from 5%
+#    to 95% with at least 1,000 in 24h volume.
 movers = pd.top_movers(
     limit=5, closed=False, volume_24hr_min=1000, probability_min=0.05, probability_max=0.95
 )

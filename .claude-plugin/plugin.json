@@ -1,11 +1,10 @@
 {
   "name": "pdata",
   "displayName": "pdata Prediction Markets",
-  "version": "0.1.0",
-  "description": "Current odds, 24-hour moves and volume from Polymarket, Kalshi, Manifold, Myriad, Limitless, Predict, Opinion and Gemini, through pdata.world's hosted, read-only MCP server. No key, no account.",
+  "version": "0.2.0",
+  "description": "Current odds, 24-hour moves and volume from 12 venues through pdata.world's hosted, read-only MCP server. No key, no account.",
   "author": {
     "name": "pdata.world",
-    "email": "support@pdata.world",
     "url": "https://pdata.world"
   },
   "homepage": "https://pdata.world/agents",

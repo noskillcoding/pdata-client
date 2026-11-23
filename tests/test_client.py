@@ -98,6 +98,93 @@ class ClientTests(unittest.TestCase):
         Client(opener=opener).event_history("kalshi", "A/B", range="7d")
         self.assertEqual(query(opener.urls[0]), {"range": "7d"})
 
+    def test_lean_iterator_uses_limit_without_adding_a_conflicting_page_size(self):
+        def answer(url):
+            n = int(query(url)["page"])
+            return {
+                "items": [{"id": str(n)}] if n < 3 else [],
+                "meta": {"page_size": 1, "total_pages": 0, "total_counted": False},
+            }
+
+        opener = FakeOpener({"/api/v1/events": answer})
+        client = Client(opener=opener)
+        self.assertEqual(
+            [item["id"] for item in client.iter_events(limit=1, view="lean")], ["1", "2"]
+        )
+        self.assertEqual(
+            [query(url) for url in opener.urls],
+            [{"page": str(n), "limit": "1", "view": "lean"} for n in range(1, 4)],
+        )
+
+    def test_lean_lists_preserve_quote_tier_and_venue_clocks(self):
+        payload = page([{"id": "m1", "quote_tier": "thin"}], 1, 1)
+        payload["_meta"] = {
+            "venues": {"kalshi": {"checked_at": "2026-11-23T17:00:00Z", "coverage": "full"}}
+        }
+        opener = FakeOpener({
+            f"/api/v1/{route}": payload
+            for route in ("events", "markets", "markets/top-movers", "markets/closing-soon")
+        })
+        client = Client(opener=opener)
+        for method in (client.events, client.markets, client.top_movers, client.closing_soon):
+            self.assertEqual(method(limit=1, view="lean"), payload)
+            self.assertEqual(query(opener.urls[-1]), {"limit": "1", "view": "lean"})
+
+    def test_status_and_batch_keep_server_fields(self):
+        status = {
+            "api_version": "2.18.0",
+            "venues": {"xo": {"checked_at": None, "late": None, "in_totals": False}},
+        }
+        batch = {
+            "items": [{"source": "kalshi", "id": "A/B", "quote_tier": "firm"}],
+            "not_found": ["xo:missing"],
+        }
+        opener = FakeOpener({"/api/v1/status": status, "/api/v1/markets/batch": batch})
+        client = Client(opener=opener)
+        self.assertEqual(client.status(), status)
+        self.assertEqual(client.markets_batch(["kalshi:A/B", "xo:missing"]), batch)
+        self.assertEqual(query(opener.urls[-1]), {"ids": "kalshi:A/B,xo:missing"})
+        self.assertEqual(client.markets_batch("kalshi:A/B,xo:missing"), batch)
+        self.assertEqual(opener.urls[-1], opener.urls[-2])
+
+    def test_brief_can_return_markdown_or_json(self):
+        def answer(url):
+            if query(url)["format"] == "md":
+                return "# Question — Markdown\n".encode()
+            return {"title": "Question"}
+
+        opener = FakeOpener({"/api/v1/events/kalshi/A%2FB/brief": answer})
+        client = Client(opener=opener)
+        self.assertEqual(client.event_brief("kalshi", "A/B"), {"title": "Question"})
+        self.assertEqual(
+            client.event_brief("kalshi", "A/B", format="md"), "# Question — Markdown\n"
+        )
+
+    def test_history_compare_and_news_forward_aliases_and_options(self):
+        opener = FakeOpener({
+            "/api/v1/events/kalshi/X/history": {"series": []},
+            "/api/v1/compare/pairs": {"pairs": []},
+            "/api/v1/news/movers": {"results": []},
+        })
+        client = Client(opener=opener)
+        client.event_history(
+            "kalshi", "X", "30d", "M", 2, interval="1d", max_points=30,
+            markets_limit=1, page_size=2,
+        )
+        client.compare_pairs("kalshi", "polymarket", page_size=5)
+        client.news_movers(limit=3)
+        self.assertEqual(
+            [query(url) for url in opener.urls],
+            [
+                {
+                    "range": "30d", "market_id": "M", "limit": "2", "interval": "1d",
+                    "max_points": "30", "markets_limit": "1", "page_size": "2",
+                },
+                {"left": "kalshi", "right": "polymarket", "page_size": "5"},
+                {"limit": "3"},
+            ],
+        )
+
     def test_api_error_becomes_pdata_error(self):
         body = json.dumps({"code": "not_found", "message": "Event not found: kalshi/X"})
         err = HTTPError("u", 404, "Not Found", {}, io.BytesIO(body.encode()))

@@ -1,15 +1,12 @@
-"""The client: one method per pdata.world API operation, plus the bulk files.
+"""Client for pdata.world REST endpoints and nightly bulk files.
 
-Every method returns the API's JSON as plain dicts and lists, unchanged, so
+JSON methods return the API's data as plain dicts and lists, unchanged, so
 the API reference at https://api.pdata.world/docs describes the fields.
-List endpoints return a page: ``{"items": [...], "meta": {"page", "page_size",
-"total", "total_pages"}, "_meta": {...}}``; the ``iter_*`` methods walk the
-pages for you.
+Market and event lists return ``items``, pagination details in ``meta`` and
+response metadata in ``_meta``. The ``iter_*`` methods walk the pages for you.
 
-Units: ``probability`` and prices are 0-1. ``volume`` and ``volume_24hr``
-are in each venue's own unit and are not converted across venues — shares
-for Polymarket, contracts for Kalshi (each pays $1 at resolution), play-money
-mana for Manifold.
+Probability and prices are 0-1. Volume is in US dollars on every venue except
+Manifold, which uses play-money mana.
 """
 
 from __future__ import annotations
@@ -17,8 +14,8 @@ from __future__ import annotations
 import gzip
 import json
 import time
-from collections.abc import Iterator, Mapping
-from typing import Any, Callable
+from collections.abc import Iterator, Mapping, Sequence
+from typing import Any, Callable, Literal, TypedDict, overload
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
@@ -39,14 +36,79 @@ VENUES = (
     "predict",
     "opinion",
     "gemini",
+    "hyperliquid",
+    "mnx",
+    "seer",
+    "xo",
 )
-BULK_KINDS = ("markets-open", "events-open", "resolved")
+BULK_KINDS = ("markets-open", "events-open", "resolved", "resolved-markets")
 
 # The API caps page_size at 200.
 MAX_PAGE_SIZE = 200
 _RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 JSON = dict[str, Any]
+View = Literal["lean", "full"]
+HistoryInterval = Literal["auto", "1d"]
+
+
+class VenueClock(TypedDict, total=False):
+    checked_at: str | None
+    cycle_period_s: float | None
+    coverage: str | None
+
+
+class StatusVenue(VenueClock):
+    late: bool | None
+    in_totals: bool
+
+
+class ResponseMeta(TypedDict, total=False):
+    venues: dict[str, VenueClock]
+    as_of: str
+    data_as_of: str | None
+    canonical_url: str
+    attribution: str
+    docs: str
+    cite_as: str
+
+
+class StatusResponse(TypedDict):
+    api_version: str
+    as_of: str
+    venues: dict[str, StatusVenue]
+    _meta: ResponseMeta
+
+
+class MarketRow(TypedDict, total=False):
+    """Common market listing fields. The wire row can carry additional fields."""
+
+    source: str
+    id: str
+    event_id: str
+    question: str
+    probability: float | None
+    quotable: bool
+    quote_tier: str | None
+    volume_24hr: float | None
+    checked_at: str | None
+    pdata_url: str
+
+
+class MarketsBatchResponse(TypedDict):
+    items: list[MarketRow]
+    not_found: list[str]
+    _meta: ResponseMeta
+
+
+class ComparePairsResponse(TypedDict):
+    left: str
+    right: str
+    pairs: list[JSON]
+    total: int
+    matched: int
+    method: str
+    _meta: ResponseMeta
 
 
 class PdataError(Exception):
@@ -151,65 +213,105 @@ class Client:
 
     def get(self, path: str, **params: Any) -> Any:
         """GET ``base_url + path`` with ``params``; returns the decoded JSON."""
+        return json.loads(self._get_text(path, **params))
+
+    def _get_text(self, path: str, **params: Any) -> str:
         query = _encode(params)
         url = f"{self.base_url}{path}" + (f"?{query}" if query else "")
         with self._open(url) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            return resp.read().decode("utf-8")
 
     def _iterate(self, path: str, max_items: int | None, params: dict[str, Any]) -> Iterator[JSON]:
-        params.setdefault("page_size", MAX_PAGE_SIZE)
+        if params.get("limit") is None:
+            params.setdefault("page_size", MAX_PAGE_SIZE)
         page = int(params.pop("page", 1))
         seen = 0
         while True:
             body = self.get(path, page=page, **params)
-            for item in body.get("items", []):
+            items = body.get("items", [])
+            for item in items:
                 yield item
                 seen += 1
                 if max_items is not None and seen >= max_items:
                     return
-            if page >= int((body.get("meta") or {}).get("total_pages") or page):
+            meta = body.get("meta") or {}
+            if meta.get("total_counted") is False:
+                if len(items) < int(meta.get("page_size") or MAX_PAGE_SIZE):
+                    return
+            elif page >= int(meta.get("total_pages") or page):
                 return
             page += 1
 
     # ── markets ──────────────────────────────────────────────────────────
 
-    def markets(self, **filters: Any) -> JSON:
+    def markets(
+        self, *, limit: int | None = None, view: View | None = None, **filters: Any
+    ) -> JSON:
         """One page of markets (``GET /markets``).
 
         Common filters: ``source`` (a venue or a list), ``search``,
         ``categories``, ``closed``, ``probability_min``/``_max``,
         ``volume_24hr_min``, ``ends_before``/``ends_after`` (ISO 8601),
         ``sort`` (e.g. ``"-volume_24hr"``, ``"-prob_24h_change"``), ``page``,
-        ``page_size`` (max 200). Unknown parameters are rejected with the
-        full list of allowed ones.
+        ``page_size`` or ``limit`` (max 200). Set ``view="lean"`` for smaller
+        rows. Market rows include quote quality in ``quote_tier`` when
+        available. Venue clocks are under ``_meta.venues``.
         """
-        return self.get("/markets", **filters)
+        return self.get("/markets", limit=limit, view=view, **filters)
 
-    def iter_markets(self, max_items: int | None = None, **filters: Any) -> Iterator[JSON]:
+    def iter_markets(
+        self,
+        max_items: int | None = None,
+        *,
+        limit: int | None = None,
+        view: View | None = None,
+        **filters: Any,
+    ) -> Iterator[JSON]:
         """Every market matching ``filters``, page by page."""
-        return self._iterate("/markets", max_items, dict(filters))
+        return self._iterate("/markets", max_items, dict(filters, limit=limit, view=view))
 
     def market(self, source: str, market_id: str) -> JSON:
         """One market by venue and id (``GET /markets/{source}/{market_id}``)."""
         return self.get(f"/markets/{_seg(source)}/{_seg(market_id)}")
 
-    def top_movers(self, limit: int | None = None, **filters: Any) -> JSON:
-        """Markets with the largest probability change over 24 hours."""
-        return self.get("/markets/top-movers", limit=limit, **filters)
+    def markets_batch(self, ids: str | Sequence[str]) -> MarketsBatchResponse:
+        """Fetch up to 50 ``source:market_id`` keys as a sequence or CSV string.
 
-    def closing_soon(self, limit: int | None = None, **filters: Any) -> JSON:
-        """Open markets closing soonest."""
-        return self.get("/markets/closing-soon", limit=limit, **filters)
+        Rows follow input order, with duplicates removed. Missing keys are
+        reported in ``not_found``.
+        """
+        return self.get("/markets/batch", ids=ids if isinstance(ids, str) else ",".join(ids))
+
+    def top_movers(
+        self, limit: int | None = None, *, view: View | None = None, **filters: Any
+    ) -> JSON:
+        """Markets with the largest probability change over 24 hours."""
+        return self.get("/markets/top-movers", limit=limit, view=view, **filters)
+
+    def closing_soon(
+        self, limit: int | None = None, *, view: View | None = None, **filters: Any
+    ) -> JSON:
+        """Markets closing soon, with optional status and sort filters."""
+        return self.get("/markets/closing-soon", limit=limit, view=view, **filters)
 
     # ── events ───────────────────────────────────────────────────────────
 
-    def events(self, **filters: Any) -> JSON:
-        """One page of events (``GET /events``); an event groups the markets of one question."""
-        return self.get("/events", **filters)
+    def events(
+        self, *, limit: int | None = None, view: View | None = None, **filters: Any
+    ) -> JSON:
+        """One page of events. Use ``page_size`` or ``limit`` and optionally ``view="lean"``."""
+        return self.get("/events", limit=limit, view=view, **filters)
 
-    def iter_events(self, max_items: int | None = None, **filters: Any) -> Iterator[JSON]:
+    def iter_events(
+        self,
+        max_items: int | None = None,
+        *,
+        limit: int | None = None,
+        view: View | None = None,
+        **filters: Any,
+    ) -> Iterator[JSON]:
         """Every event matching ``filters``, page by page."""
-        return self._iterate("/events", max_items, dict(filters))
+        return self._iterate("/events", max_items, dict(filters, limit=limit, view=view))
 
     def event(self, source: str, event_id: str, markets_limit: int | None = None) -> JSON:
         """One event with its markets.
@@ -223,6 +325,23 @@ class Client:
             f"/events/{_seg(source)}/{_seg(event_id)}", markets_limit=markets_limit
         )
 
+    @overload
+    def event_brief(self, source: str, event_id: str, *, format: Literal["md"]) -> str: ...
+
+    @overload
+    def event_brief(
+        self, source: str, event_id: str, *, format: Literal["json"] = "json"
+    ) -> JSON: ...
+
+    def event_brief(
+        self, source: str, event_id: str, *, format: Literal["md", "json"] = "json"
+    ) -> JSON | str:
+        """A compact event brief, as JSON by default or Markdown with ``format="md"``."""
+        path = f"/events/{_seg(source)}/{_seg(event_id)}/brief"
+        if format == "md":
+            return self._get_text(path, format=format)
+        return self.get(path, format=format)
+
     def event_history(
         self,
         source: str,
@@ -230,36 +349,66 @@ class Client:
         range: str = "24h",
         market_id: str | None = None,
         limit: int | None = None,
+        *,
+        interval: HistoryInterval | None = None,
+        max_points: int | None = None,
+        markets_limit: int | None = None,
+        page_size: int | None = None,
     ) -> JSON:
         """Price and 24h-volume series for an event's top markets.
 
-        ``range`` is ``"24h"``, ``"7d"``, ``"30d"`` or ``"all"`` (history
-        starts May 2026; points older than 7 days are 12-hour buckets).
+        ``range`` is ``"24h"``, ``"7d"``, ``"30d"`` or ``"all"``.
+        Use ``interval="1d"`` for daily buckets and ``max_points`` to target
+        a smaller series. ``markets_limit`` caps the number of series and
+        takes precedence over ``limit`` or its alias ``page_size``.
         """
         return self.get(
             f"/events/{_seg(source)}/{_seg(event_id)}/history",
             range=range,
             market_id=market_id,
             limit=limit,
+            interval=interval,
+            max_points=max_points,
+            markets_limit=markets_limit,
+            page_size=page_size,
         )
 
-    def similar_events(self, source: str, event_id: str, limit: int | None = None) -> JSON:
+    def similar_events(
+        self, source: str, event_id: str, limit: int | None = None, *, page_size: int | None = None
+    ) -> JSON:
         """Events on other venues (and the same one) asking a similar question."""
-        return self.get(f"/events/{_seg(source)}/{_seg(event_id)}/similar", limit=limit)
+        return self.get(
+            f"/events/{_seg(source)}/{_seg(event_id)}/similar", limit=limit, page_size=page_size
+        )
+
+    def compare_pairs(
+        self,
+        left: Literal["polymarket", "kalshi"] = "polymarket",
+        right: Literal["polymarket", "kalshi"] = "kalshi",
+        limit: int | None = None,
+        *,
+        page_size: int | None = None,
+    ) -> ComparePairsResponse:
+        """Matched Polymarket and Kalshi prices with the largest gaps first."""
+        return self.get("/compare/pairs", left=left, right=right, limit=limit, page_size=page_size)
 
     # ── search, summary, news ───────────────────────────────────────────
 
-    def search(self, q: str, limit: int | None = None) -> JSON:
+    def search(self, q: str, limit: int | None = None, *, page_size: int | None = None) -> JSON:
         """Events and markets whose titles match ``q``."""
-        return self.get("/search/suggest", q=q, limit=limit)
+        return self.get("/search/suggest", q=q, limit=limit, page_size=page_size)
+
+    def status(self) -> StatusResponse:
+        """API version, completed-cycle clocks, coverage and totals eligibility."""
+        return self.get("/status")
 
     def summary(self) -> JSON:
         """Per-venue totals: open markets, events and 24h volume."""
         return self.get("/summary")
 
-    def news_movers(self, **filters: Any) -> JSON:
+    def news_movers(self, *, limit: int | None = None, **filters: Any) -> JSON:
         """The /news feed: markets whose price moved most, scored by move and volume."""
-        return self.get("/news/movers", **filters)
+        return self.get("/news/movers", limit=limit, **filters)
 
     # ── bulk files ───────────────────────────────────────────────────────
 
@@ -271,17 +420,18 @@ class Client:
     def iter_bulk(self, kind: str, *, include_manifest: bool = False) -> Iterator[JSON]:
         """Stream a nightly bulk file, one record at a time.
 
-        ``kind`` is ``"markets-open"``, ``"events-open"`` or ``"resolved"``.
+        ``kind`` is ``"markets-open"``, ``"events-open"``, ``"resolved"`` or
+        ``"resolved-markets"``.
         Line 1 of each file is a manifest (``{"_manifest": {...}}``) giving
         the licence and every field's meaning and unit; it is skipped unless
         ``include_manifest`` is true. Nothing is written to disk.
         """
         if kind not in BULK_KINDS:
             raise ValueError(f"kind must be one of {BULK_KINDS}, not {kind!r}")
-        with self._open(f"{self.bulk_url}/{kind}-latest.jsonl.gz") as resp:
-            with gzip.GzipFile(fileobj=resp) as lines:
-                for i, line in enumerate(lines):
-                    row = json.loads(line)
-                    if i == 0 and "_manifest" in row and not include_manifest:
-                        continue
-                    yield row
+        url = f"{self.bulk_url}/{kind}-latest.jsonl.gz"
+        with self._open(url) as resp, gzip.GzipFile(fileobj=resp) as lines:
+            for i, line in enumerate(lines):
+                row = json.loads(line)
+                if i == 0 and "_manifest" in row and not include_manifest:
+                    continue
+                yield row

@@ -1,27 +1,25 @@
 cff-version: 1.2.0
 message: "If you use pdata.world data, please cite it as below."
 type: dataset
-title: "pdata.world: prediction-market prices, volumes and results from eight venues"
+title: "pdata.world: prediction-market prices, volumes and results from 12 venues"
+version: "0.2.0"
 authors:
   - name: "pdata.world"
     website: "https://pdata.world"
 abstract: >-
   Prices, 24-hour volume and results for prediction markets on Polymarket,
-  Kalshi, Manifold, Myriad, Limitless, Predict, Opinion and Gemini, collected
-  every 10 to 60 minutes and served through a read-only API, an MCP server,
+  Kalshi, Manifold, Myriad, Limitless, Predict, Opinion, Gemini, Hyperliquid,
+  MNX, Seer and XO Market, served through a read-only API, an MCP server,
   nightly bulk files and a public read-only Postgres database.
-doi: "10.5281/zenodo.23211611"
+doi: "10.5281/zenodo.23211610"
 identifiers:
   - type: doi
-    value: "10.5281/zenodo.23211611"
-    description: "Zenodo snapshot of 2026-10-07"
-  - type: doi
-    value: "10.5281/zenodo.23211610"
-    description: "Zenodo concept DOI: always resolves to the latest snapshot"
+    value: "10.5281/zenodo.24476601"
+    description: "Zenodo snapshot of 2026-11-23"
 url: "https://pdata.world/data"
 repository-code: "https://github.com/noskillcoding/pdata-client"
 license: CC-BY-4.0
-date-released: "2026-10-07"
+date-released: "2026-11-23"
 keywords:
   - prediction markets
   - Polymarket

@@ -1,7 +1,7 @@
 {
   "$schema": "https://apify.com/schemas/v1/input.ide.json",
   "title": "Prediction market events",
-  "description": "Search by phrase, by venue, or both. With neither, the actor returns the most traded open events across all eight venues.",
+  "description": "Search by phrase, by venue, or both. With neither, the actor returns the most traded open events across all 12 venues.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
@@ -17,9 +17,9 @@
       "title": "Venue",
       "type": "string",
       "editor": "select",
-      "description": "Only events from this venue. Leave empty for all eight.",
-      "enum": ["polymarket", "kalshi", "manifold", "myriad", "limitless", "predict", "opinion", "gemini"],
-      "enumTitles": ["Polymarket", "Kalshi", "Manifold", "Myriad", "Limitless", "Predict", "Opinion", "Gemini"]
+      "description": "Only events from this venue. Leave empty for all 12.",
+      "enum": ["polymarket", "kalshi", "manifold", "myriad", "limitless", "predict", "opinion", "gemini", "hyperliquid", "mnx", "seer", "xo"],
+      "enumTitles": ["Polymarket", "Kalshi", "Manifold", "Myriad", "Limitless", "Predict", "Opinion", "Gemini", "Hyperliquid", "MNX", "Seer", "XO Market"]
     },
     "maxEvents": {
       "title": "Maximum events",

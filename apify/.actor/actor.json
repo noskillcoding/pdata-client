@@ -3,7 +3,7 @@
   "actorSpecification": 1,
   "name": "pdata-prediction-markets",
   "title": "Prediction Market Odds (pdata.world)",
-  "description": "Current odds, 24-hour moves and volume for prediction-market events on eight venues, read from pdata.world's free public API. Search by phrase, pick a venue, or list the most traded events.",
+  "description": "Current odds, 24-hour moves and volume for prediction-market events on 12 venues, read from pdata.world's free public API. Search by phrase, pick a venue, or list the most traded events.",
   "version": "0.1",
   "buildTag": "latest",
   "inputSchema": "./input_schema.json",

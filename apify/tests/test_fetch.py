@@ -153,14 +153,14 @@ class FetchTests(unittest.TestCase):
 
         first = rows[0]
         self.assertEqual(first["venue"], "polymarket")
-        self.assertEqual(first["volumeUnit"], "shares")
+        self.assertEqual(first["volumeUnit"], "USD")
         self.assertEqual(first["outcomesTotal"], 7)
         self.assertEqual([o["outcomeName"] for o in first["outcomes"]], ["Outcome 0", "Outcome 1"])
         self.assertEqual(first["citeAs"], "According to pdata.world ... 1")
         self.assertEqual(first["asOf"], "2026-11-12T08:01:00Z")
         self.assertEqual(first["attribution"], META["attribution"])
         self.assertEqual(rows[1]["pdataUrl"], "https://pdata.world/events/kalshi/group:26NOV12ABC")
-        self.assertEqual(rows[1]["volumeUnit"], "contracts")
+        self.assertEqual(rows[1]["volumeUnit"], "USD")
 
     def test_zero_outcomes_makes_a_single_request(self):
         opener = FakeOpener(
@@ -178,7 +178,16 @@ class FetchTests(unittest.TestCase):
         self.assertIsNone(rows[0]["citeAs"])
         self.assertEqual(rows[0]["asOf"], META["as_of"])
         self.assertEqual(rows[0]["pdataUrl"], "https://pdata.world/events/myriad/9")
-        self.assertEqual(rows[0]["volumeUnit"], "as reported by the venue")
+        self.assertEqual(rows[0]["volumeUnit"], "USD")
+
+    def test_new_venues_and_manifold_use_the_documented_units(self):
+        for venue, unit in (("xo", "USD"), ("manifold", "mana (play money)")):
+            with self.subTest(venue=venue):
+                opener = FakeOpener({"/api/v1/events": {"items": [event(venue, "1")]}})
+                options = normalize_input({"venue": venue, "outcomesPerEvent": 0})
+                rows = fetch_events(PdataApi(opener=opener), **options)
+                self.assertEqual(query(opener.requests[0].full_url)["source"], venue)
+                self.assertEqual(rows[0]["volumeUnit"], unit)
 
     def test_api_error_carries_the_code(self):
         body = json.dumps({"code": "unknown_param", "message": "Unknown query param(s)"})

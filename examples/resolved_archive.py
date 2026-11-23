@@ -1,4 +1,4 @@
-"""Stream the archive of resolved events (about 36 MB gzipped) without saving it.
+"""Stream the gzipped archive of resolved events without saving it.
 
 Counts, per venue, how many archived markets carry a reported result.
 Run: python examples/resolved_archive.py

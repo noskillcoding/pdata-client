@@ -1,8 +1,7 @@
 """A small Python client for pdata.world, the prediction-market data API.
 
-pdata.world collects prices, volumes and results from eight venues —
-Polymarket, Kalshi, Manifold, Myriad, Limitless, Predict, Opinion and
-Gemini — and serves them through one read-only API. No key, no signup.
+pdata.world collects prices, volumes and results from 12 venues and serves
+them through one read-only API. No key, no signup.
 The data is published under CC BY 4.0: use it, and credit pdata.world.
 
     >>> from pdata import Client
